@@ -22,7 +22,7 @@ export const routes = [
     },
     {
         name: 'propertyEdit',
-        path: '/property/:id/edit',
+        path: '/property/edit/:id',
         component: Edit
     },
     {

@@ -28,16 +28,16 @@
                             <tr v-for="(property,key) in properties.data" :key="key">
                                 <td>{{ property.uuid }}</td>
                                 <td>
-                                    <img v-bind:src="property.image_thumbnail" class="img-fluid"/>
+                                    <img width="250" v-bind:src="property.image_thumbnail" class="img-fluid"/>
                                 </td>
-                                <td>{{ property.property_type.title }}</td>
+                                <td>{{ property.get_property_type.title }}</td>
                                 <td>{{ property.county }}</td>
                                 <td>{{ property.description }}</td>
                                 <td>
-                                    <router-link :to='{name:"propertyEdit",params:{id:property.property_type_id}}'
+                                    <router-link :to='{name:"propertyEdit",params:{id:property.id}}'
                                                  class="btn btn-success">Edit
                                     </router-link>
-                                    <button type="button" @click="deleteProperty(property.property_type_id)"
+                                    <button type="button" @click="deleteProperty(property.id)"
                                             class="btn btn-danger">Delete
                                     </button>
                                 </td>
@@ -51,27 +51,7 @@
                         </table>
 
                         <div class="text-center">
-                            <div class="btn-group " role="group" aria-label="Basic example">
-                                <button :disabled="firstsPage ? false : true" @click="goPage(firstsPage)"
-                                        class="btn btn-primary">First
-                                </button>
-                                <button :disabled="prevPage ? false : true" @click="goPage(prevPage)"
-                                        class="btn btn-primary">Prev
-                                </button>
-
-                                <button
-                                        class="btn btn-info"> {{ properties.current_page }}
-                                </button>
-
-                                <button :disabled="nextPage ? false : true" @click="goPage(nextPage)"
-                                        class="btn btn-primary">NEXT
-                                </button>
-                                <button :disabled="lastPage ? false : true" @click="goPage(lastPage)"
-                                        class="btn btn-primary">Last
-                                </button>
-
-
-                            </div>
+                            <pagination :data="properties" @pagination-change-page="getProperties"></pagination>
                         </div>
 
 
@@ -119,29 +99,30 @@ export default {
             console.log(no)
             this.getProperties();
         },
-        async getProperties() {
+        deleteProperties(id) {
+            this.axios
+                .delete(`http://localhost:8000/api/post/delete/${id}`)
+                .then(response => {
+                    let i = this.posts.map(item => item.id).indexOf(id); // find index of your object
+                    this.posts.splice(i, 1)
+                });
+        },
+        async getProperties(page) {
             let self = this;
             self.show = true;
 
-
-            let apiurl = '/api/properties';
-            if (self.page) {
-                apiurl = '/api/properties?page=' + self.page;
+            if (typeof page === 'undefined') {
+                page = 1;
             }
 
+            // let apiurl = '/api/lists';
+            // if (self.page) {
+            // }
+
+               let apiurl = '/api/lists?page=' + page;
             await this.axios.get(apiurl).then(response => {
-                self.properties = response.data;
-
-                console.log(self.properties.next_page_url);
-
-                self.firstsPage = self.properties.first_page_url ? new URLSearchParams(new URL(self.properties.first_page_url).search).get('page[number]') : null;
-                self.prevPage = self.properties.prev_page_url ? new URLSearchParams(new URL(self.properties.prev_page_url).search).get('page[number]') : null;
-                self.nextPage = self.properties.next_page_url ? new URLSearchParams(new URL(self.properties.next_page_url).search).get('page[number]') : null;
-                self.lastPage = self.properties.last_page_url ? new URLSearchParams(new URL(self.properties.last_page_url).search).get('page[number]') : null;
-
-                console.log(self.nextPage);
+                self.properties = response.data.list;
                 self.show = false;
-                console.log(self.properties)
 
             }).catch(error => {
                 console.log(error)
@@ -150,7 +131,7 @@ export default {
         },
         deleteProperty(id) {
             if (confirm("Are you sure to delete this category ?")) {
-                this.axios.delete(`https://trial.craig.mtcserver15.com/api/properties/${id}`).then(response => {
+                this.axios.delete(`/api/delete/${id}`).then(response => {
                     this.getProperties()
                 }).catch(error => {
                     console.log(error)
